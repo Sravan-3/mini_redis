@@ -3,7 +3,7 @@
 pub enum Command {
     Ping,
     Echo(String),
-    Set {key:String, value:String},
+    Set {key:String, value:String,ex:Option<u64>},
     Get {key:String},
     Del {key:String},
     Quit,

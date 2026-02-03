@@ -3,6 +3,8 @@ use tokio::{
     net::TcpStream,
 };
 
+use std::time::Duration;
+
 use crate::{command::Command, parser, store::Store};
 
 pub async fn handle_client(socket: TcpStream,store:Store) -> Result<(), Box<dyn std::error::Error>> {
@@ -23,8 +25,9 @@ pub async fn handle_client(socket: TcpStream,store:Store) -> Result<(), Box<dyn 
         let cmd = parser::parse_command(&line);
 
         match cmd {
-            Command::Set { key, value } =>{
-                store.set(key, value).await;
+            Command::Set { key, value,ex } =>{
+                let ttl = ex.map(Duration::from_secs);
+                store.set(key,value,ttl).await;
                 writer.write_all(b"OK\n").await?;
             }
             Command::Get { key } =>{

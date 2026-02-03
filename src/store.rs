@@ -1,6 +1,6 @@
 // Store module for mini_redis
 
-use std::{clone, collections::HashMap, sync::Arc};
+use std::{ collections::HashMap, sync::Arc, time::{Instant,Duration}};
 
 
 use tokio::sync::RwLock;
@@ -8,7 +8,12 @@ use tokio::sync::RwLock;
 
 #[derive(Clone)]
 pub struct Store{
-    inner:Arc<RwLock<HashMap<String,String>>>
+    inner:Arc<RwLock<HashMap<String,Entry>>>
+}
+
+struct Entry{
+    value:String,
+    expires_at:Option<Instant>
 }
 
 
@@ -19,14 +24,26 @@ impl Store {
         }
     }
 
-    pub async fn set(&self,key:String,value:String){
+    pub async fn set(&self,key:String,value:String,ttl:Option<Duration>){
+        let expires_at = ttl.map(|d| Instant::now() + d);
         let mut map  = self.inner.write().await;
-        map.insert(key,value);
+        map.insert(key,Entry { value, expires_at });
     }
 
     pub async fn get(&self,key:&str) -> Option<String>{
-        let mut map = self.inner.read().await;
-        map.get(key).cloned()
+        let mut  map = self.inner.write().await;
+        if let Some(entry) = map.get(key){
+            if let Some(expire) = entry.expires_at{
+                if Instant::now() > expire{
+                    //expired -> delete
+                    map.remove(key);
+                    return None;
+                }
+               
+            }
+            return Some(entry.value.clone());
+        }
+        None
     }
 
     pub async fn del(&self, key:&str) -> bool{

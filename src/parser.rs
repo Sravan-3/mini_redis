@@ -20,8 +20,22 @@ pub fn parse_command(input:&str) -> Command{
                 Some(k) => k.to_string(),
                 None => return Command::Unknown("SET missing key".to_string()),
             };
-            let value = parts.collect::<Vec<_>>().join(" ");
-            Command::Set { key, value }
+            let value = match parts.next() {
+                Some(v) => v.to_string(),
+                None => return Command::Unknown("SET missing value".to_string()),
+            };
+
+            let mut ex = None;
+
+            if let Some(flag) = parts.next() {
+                if flag.eq_ignore_ascii_case("EX") {
+                    if let Some(sec) = parts.next() {
+                        ex = sec.parse::<u64>().ok();
+                    }
+                }
+            }
+
+            Command::Set { key, value ,ex}
         },
         "GET" => {
             let key:String = match parts.next() {
