@@ -27,13 +27,15 @@ impl Store {
     }
 
     pub async fn set(&self,key:String,value:String,ttl:Option<Duration>){
+        let mut map = self.inner.write().await;
+
         let expires_at = ttl.map(|d| {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_secs() + d.as_secs()
-    });
-        let mut map  = self.inner.write().await;
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs() + d.as_secs()
+        });
+     
         map.insert(key,Entry { value, expires_at });
     }
 
@@ -44,13 +46,15 @@ impl Store {
         
         if let Some(entry) = map.get(key){
             if let Some(expire) = entry.expires_at{
-                if now > expire{
+                if now >= expire{
                     //expired -> delete
                     map.remove(key);
                     return None;
                 }
                
             }
+  
+
             return Some(entry.value.clone());
         }
         None
@@ -72,6 +76,7 @@ impl Store {
 
 
         match parse_command(input) {
+
             Command::Set { key, value, exat,.. } => {
                if let Some(expity_ts) = exat {
                    if expity_ts <= now{
@@ -84,6 +89,8 @@ impl Store {
                }else {
                    self.set(key, value, None).await;
                }
+               
+
             }
             Command::Del { key }=> {
                 self.del(&key).await;
