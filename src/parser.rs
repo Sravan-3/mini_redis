@@ -31,11 +31,20 @@ pub fn parse_command(input:&str) -> Command{
             while let Some(flag) = parts.next() {
                 if flag.eq_ignore_ascii_case("EX") {
                     if let Some(sec) = parts.next() {
-                        ex = sec.parse::<u64>().ok();
+                        match sec.parse::<u64>() {
+                            Ok(n)if n > 0 => ex = Some(n),
+                            Ok(_) => return Command::Unknown("EX must be > 0".into()),
+                            Err(_) => return Command::Unknown("Invalid EX value".into())
+
+                        }
                     }
                 }else if flag.eq_ignore_ascii_case("EXAT") {
                         if let Some(ts) = parts.next() {
-                            exat = ts.parse::<u64>().ok();
+                            match ts.parse::<u64>(){
+                                Ok(n) if n > 0 => exat = Some(n),
+                                Ok(_) => return Command::Unknown("EXAT must be > 0".into()),
+                                Err(_) => return Command::Unknown("Invalid EXAT value".into()) 
+                            }
                             
                         }
                 }
