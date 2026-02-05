@@ -1,4 +1,4 @@
-# Mini Redis (Rust)
+# MemIgnite (Rust)
 
 A simplified Redis-like in-memory key-value store built in Rust to understand
 backend systems, async networking, concurrency, caching, and persistence.
