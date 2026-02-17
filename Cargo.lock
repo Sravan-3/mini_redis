@@ -46,7 +46,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "mini_redis"
+name = "memignite"
 version = "0.1.0"
 dependencies = [
  "thiserror",
